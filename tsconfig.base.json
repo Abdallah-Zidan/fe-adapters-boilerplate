@@ -1,6 +1,10 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
@@ -14,7 +18,14 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@libs/core": ["libs/core/src/index.ts"],
+      "@libs/mongo-event-store": ["libs/mongo-event-store/src/index.ts"],
+      "@libs/redis-session": ["libs/redis-session/src/index.ts"],
+      "@libs/socket.io-adapter": ["libs/socket.io-adapter/src/index.ts"],
+      "@libs/vault": ["libs/vault/src/index.ts"],
+      "@libs/ws-adapter": ["libs/ws-adapter/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
