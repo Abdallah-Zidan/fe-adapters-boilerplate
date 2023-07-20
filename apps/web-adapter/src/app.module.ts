@@ -12,6 +12,7 @@ import {
   ORCHESTRATOR_QUEUE_CLIENT,
   loggerConfig,
 } from '@libs/core';
+import { SocketIoModule } from '@libs/socket.io-adapter';
 import { WsAdapterModule } from '@libs/ws-adapter';
 
 @Module({
@@ -58,9 +59,40 @@ import { WsAdapterModule } from '@libs/ws-adapter';
           };
         },
       },
-      new Logger(MongoEventStoreModule.name),
+      new Logger(MongoEventStoreModule.name)
     ),
-    WsAdapterModule,
+    // SocketIoModule.registerAsync({
+    //   inject: [VaultService],
+    //   async useFactory(vaultService: VaultService) {
+    //     const redisData = await vaultService.get<{
+    //       host: string;
+    //       port: number;
+    //       password: string;
+    //     }>(REDIS_VAULT_PATH);
+    //     return {
+    //       logger: new Logger(SocketIoModule.name),
+    //       redisUrl: `redis://${redisData.host}:${redisData.port}`,
+    //     };
+    //   },
+    // }),
+    WsAdapterModule.registerAsync({
+      inject: [VaultService],
+      async useFactory(vaultService: VaultService) {
+        const redisData = await vaultService.get<{
+          host: string;
+          port: number;
+          password: string;
+        }>(REDIS_VAULT_PATH);
+        return {
+          logger: new Logger(SocketIoModule.name),
+          redis: {
+            host: redisData.host,
+            port: redisData.port,
+            password: redisData.password,
+          },
+        };
+      },
+    }),
     ClientsModule.register([
       {
         name: ORCHESTRATOR_QUEUE_CLIENT,

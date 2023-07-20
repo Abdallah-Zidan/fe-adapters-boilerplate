@@ -7,4 +7,5 @@ export interface ExtendedSocket extends Original {
 
 export type ModuleOptions = {
   logger?: Logger;
+  redisUrl: string;
 };

@@ -10,10 +10,12 @@ import { LOGGER } from './constants';
 export class MongoEventStoreModule {
   static registerAsync(
     options: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       inject: any[];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       useFactory: (...args: any[]) => Promise<ModuleOptions> | ModuleOptions;
     },
-    logger?: Logger,
+    logger?: Logger
   ): DynamicModule {
     return {
       module: MongoEventStoreModule,

@@ -17,8 +17,8 @@ export class RedisSessionService implements ISessionManager {
     if (isEmpty(data)) return null;
     return {
       id: sessionID,
-      isActive: data.isActive === 'true',
-      lastActivity: new Date(data.lastActivity),
+      isActive: data['isActive'] === 'true',
+      lastActivity: new Date(data['lastActivity']),
     };
   }
 

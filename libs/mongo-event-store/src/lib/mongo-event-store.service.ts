@@ -9,7 +9,7 @@ import { LOGGER } from './constants';
 export class MongoEventStoreService implements IEventStore {
   constructor(
     @InjectModel(Event.name) private eventModel: Model<Event>,
-    @Inject(LOGGER) private readonly logger: Logger,
+    @Inject(LOGGER) private readonly logger: Logger
   ) {}
   async save(event: Omit<IEvent, 'id'>): Promise<IEvent> {
     const model = new this.eventModel(event);
@@ -26,11 +26,12 @@ export class MongoEventStoreService implements IEventStore {
   }
 
   async find({ limit, sessionID, since }: FindCriteria): Promise<IEvent[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const criteria: Record<string, any> = {};
     let defaultLimit = 100;
 
     if (sessionID) {
-      criteria.sessionID = sessionID;
+      criteria['sessionID'] = sessionID;
     }
 
     if (limit && !since && limit > 100) {
@@ -38,7 +39,7 @@ export class MongoEventStoreService implements IEventStore {
     }
 
     if (since) {
-      criteria.createdAt = { $gt: since };
+      criteria['createdAt'] = { $gt: since };
     }
 
     this.logger.debug('%j', criteria);
@@ -57,7 +58,7 @@ export class MongoEventStoreService implements IEventStore {
       },
       {
         new: true,
-      },
+      }
     );
 
     return event ? modelToIEvent(event) : null;

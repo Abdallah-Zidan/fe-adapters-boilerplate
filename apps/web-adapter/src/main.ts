@@ -2,7 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { SOCKET_ADAPTER_TOKEN, WEB_OUTPUT_QUEUE } from '@libs/core';
+import {
+  ISocketAdapter,
+  SOCKET_ADAPTER_TOKEN,
+  WEB_OUTPUT_QUEUE,
+} from '@libs/core';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
@@ -13,7 +17,6 @@ async function bootstrap() {
 
   app.useLogger(app.get(Logger));
 
-  const socketAdapter = app.get(SOCKET_ADAPTER_TOKEN);
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
@@ -28,6 +31,7 @@ async function bootstrap() {
   await app.startAllMicroservices();
   await app.listen(3000);
 
-  socketAdapter.start(app.getHttpServer());
+  const socketAdapter = app.get<ISocketAdapter>(SOCKET_ADAPTER_TOKEN);
+  await socketAdapter.start(app.getHttpServer());
 }
 bootstrap();

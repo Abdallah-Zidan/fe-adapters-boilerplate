@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Server, IncomingMessage } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 
@@ -15,24 +15,32 @@ import {
 } from '@libs/core';
 import * as internal from 'stream';
 import { randomUUID } from 'crypto';
-
+import { Redis } from 'ioredis';
+import { MODULE_OPTIONS_TOKEN } from './module.definition';
+import { ModuleOptions } from './types';
+import { LOGGER } from './constants';
 @Injectable()
 export class WSService implements ISocketAdapter {
   private wss!: WebSocketServer;
   private readonly sockets: Map<string, WebSocket> = new Map();
-
-  private readonly logger = new Logger(WSService.name);
+  private readonly publisher: Redis;
+  private readonly subscriber: Redis;
 
   constructor(
     @SessionManager() private readonly sessionManager: ISessionManager,
     @EventStore() private readonly eventStore: IEventStore,
-    private readonly eventEmitter: EventEmitter2
-  ) {}
+    private readonly eventEmitter: EventEmitter2,
+    @Inject(LOGGER) private readonly logger: Logger,
+    @Inject(MODULE_OPTIONS_TOKEN) readonly options: ModuleOptions
+  ) {
+    this.publisher = new Redis(options.redis);
+    this.subscriber = this.publisher.duplicate();
+  }
 
-  start(server: Server): void {
+  async start(server: Server) {
+    this.handleSubscription();
     this.wss = new WebSocketServer({ noServer: true });
     server.on('upgrade', this.handleSession.bind(this));
-
     this.wss.on('connection', (socket: WithSession<WebSocket>) => {
       socket.on('message', async (rawPayload, isBinary) => {
         if (!isBinary) {
@@ -55,10 +63,18 @@ export class WSService implements ISocketAdapter {
 
   public async send(event: IEvent) {
     await this.eventStore.save(event);
-    const targetSocket = this.sockets.get(event.sessionID);
-    if (targetSocket) {
-      targetSocket.send(JSON.stringify(event));
-    }
+    await this.publisher.publish('socket_events', JSON.stringify(event));
+  }
+
+  private handleSubscription() {
+    this.subscriber.subscribe('socket_events');
+    this.subscriber.on('message', async (_, message) => {
+      const event = JSON.parse(message) as IEvent;
+      const targetSocket = this.sockets.get(event.sessionID);
+      if (targetSocket) {
+        targetSocket.send(message);
+      }
+    });
   }
 
   private async handleSession(

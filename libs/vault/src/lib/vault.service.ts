@@ -2,10 +2,13 @@ import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { MODULE_OPTIONS_TOKEN } from './vault.module.definition';
 import { LoginResponse, ReadKvResponse, VaultModuleOptions } from './types';
-
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { EventEmitter, once } from 'events';
 
 const tokenEvent = new EventEmitter();
+
+const CACHE_TTL_MS = 15 * 60 * 1000;
 
 @Injectable()
 export class VaultService {
@@ -20,13 +23,17 @@ export class VaultService {
     private readonly http: HttpService,
     @Inject(MODULE_OPTIONS_TOKEN)
     readonly moduleOptions: VaultModuleOptions,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {
     this.vaultUrl = moduleOptions.vaultUrl;
     this.roleId = moduleOptions.roleId;
     this.secretId = moduleOptions.secretId;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async get<T = any>(path: string) {
+    const fromCache = await this.cache.get<T | undefined>(path);
+    if (fromCache) return fromCache;
     const url = `${this.vaultUrl}/v1/${path}`;
     await this.ensureToken();
     const data = await this.http.axiosRef.get<ReadKvResponse>(url, {
@@ -35,7 +42,11 @@ export class VaultService {
       },
     });
 
-    return data.data.data.data as T;
+    const retVal = data.data.data.data as T;
+
+    await this.cache.set(path, retVal, CACHE_TTL_MS);
+
+    return retVal;
   }
 
   private async login() {
