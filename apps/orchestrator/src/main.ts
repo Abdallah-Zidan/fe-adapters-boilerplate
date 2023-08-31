@@ -9,7 +9,7 @@ async function bootstrap() {
     {
       transport: Transport.RMQ,
       options: {
-        urls: ['amqp://localhost:5672'],
+        urls: ['amqp://localhost:5672'], //? this should be retrieved from config not hardcoded
         queue: ORCHESTRATOR_INPUT_QUEUE,
         queueOptions: {
           durable: true,
