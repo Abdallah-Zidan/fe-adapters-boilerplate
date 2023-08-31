@@ -1,21 +1,21 @@
 {
-  "name": "vault",
+  "name": "dev-config",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/vault/src",
+  "sourceRoot": "libs/dev-config/src",
   "projectType": "library",
   "targets": {
     "lint": {
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["libs/vault/**/*.ts"]
+        "lintFilePatterns": ["libs/dev-config/**/*.ts"]
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/vault/jest.config.ts",
+        "jestConfig": "libs/dev-config/jest.config.ts",
         "passWithNoTests": true
       },
       "configurations": {

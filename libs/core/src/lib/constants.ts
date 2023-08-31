@@ -1,6 +1,7 @@
 export const SESSION_MANAGER_TOKEN = Symbol('SESSION_MANAGER');
 export const EVENT_STORE_TOKEN = Symbol('EVENT_STORE');
 export const SOCKET_ADAPTER_TOKEN = Symbol('SOCKET_ADAPTER');
+export const CONFIG_MANAGER_TOKEN = Symbol('CONFIG_MANAGER');
 
 export const CLIENT_EVENT = 'CLIENT_EVENT';
 export const WEB_OUTPUT_EVENT = 'WEB_OUTPUT_EVENT';
@@ -19,4 +20,7 @@ export const ReplyTo = {
   FACEBOOK_OUTPUT_QUEUE,
   WHATSAPP_OUTPUT_QUEUE,
 } as const;
-export type ReplyTo = (typeof ReplyTo)[keyof typeof ReplyTo];
+export type ReplyTo = typeof ReplyTo[keyof typeof ReplyTo];
+
+export const DEFAULT_SESSION_EXPIRY_SECONDS = 3600;
+export const DEFAULT_SESSION_PREFIX = 'session:';

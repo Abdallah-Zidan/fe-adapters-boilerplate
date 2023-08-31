@@ -1,18 +1,19 @@
 import { Logger, Module } from '@nestjs/common';
 import { RedisSessionModule } from '@libs/redis-session';
 import { MongoEventStoreModule } from '@libs/mongo-event-store';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { VaultModule, VaultService } from '@libs/vault';
-import { MONGO_VAULT_PATH, REDIS_VAULT_PATH } from './constants';
+import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { ChatController } from './chat.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import {
+  CONFIG_MANAGER_TOKEN,
+  IConfigManager,
   ORCHESTRATOR_INPUT_QUEUE,
   ORCHESTRATOR_QUEUE_CLIENT,
   loggerConfig,
 } from '@libs/core';
 import { SocketIoModule } from '@libs/socket.io-adapter';
+import { DevConfigModule } from '@libs/dev-config';
 import { WsAdapterModule } from '@libs/ws-adapter';
 
 @Module({
@@ -21,39 +22,30 @@ import { WsAdapterModule } from '@libs/ws-adapter';
       isGlobal: true,
     }),
     LoggerModule.forRoot(loggerConfig),
-    VaultModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        roleId: configService.getOrThrow('VAULT_ROLE_ID'),
-        secretId: configService.getOrThrow('VAULT_SECRET_ID'),
-        vaultUrl: configService.getOrThrow('VAULT_URL'),
-      }),
+    DevConfigModule.registerAsync({
+      useFactory() {
+        return {
+          env: process.env,
+        };
+      },
     }),
     RedisSessionModule.registerAsync({
-      inject: [VaultService],
-      async useFactory(vaultService: VaultService) {
-        const redisData = await vaultService.get<{
-          host: string;
-          port: number;
-          password: string;
-        }>(REDIS_VAULT_PATH);
+      inject: [CONFIG_MANAGER_TOKEN],
+      async useFactory(configManager: IConfigManager) {
+        const redisData = await configManager.getRedisOpts();
         return {
           host: redisData.host,
           port: redisData.port,
-          password: redisData.password || undefined,
+          password: redisData.password ?? undefined,
         };
       },
     }),
 
     MongoEventStoreModule.registerAsync(
       {
-        inject: [VaultService],
-        useFactory: async (vaultService: VaultService) => {
-          const mongoData = await vaultService.get<{
-            host: string;
-            port: number;
-            db: string;
-          }>(MONGO_VAULT_PATH);
+        inject: [CONFIG_MANAGER_TOKEN],
+        useFactory: async (configManager: IConfigManager) => {
+          const mongoData = await configManager.getMongoOpts();
           return {
             uri: `mongodb://${mongoData.host}:${mongoData.port}/${mongoData.db}`,
           };
@@ -62,13 +54,9 @@ import { WsAdapterModule } from '@libs/ws-adapter';
       new Logger(MongoEventStoreModule.name)
     ),
     // SocketIoModule.registerAsync({
-    //   inject: [VaultService],
-    //   async useFactory(vaultService: VaultService) {
-    //     const redisData = await vaultService.get<{
-    //       host: string;
-    //       port: number;
-    //       password: string;
-    //     }>(REDIS_VAULT_PATH);
+    //   inject: [CONFIG_MANAGER_TOKEN],
+    //   async useFactory(configManager: IConfigManager) {
+    //     const redisData = await configManager.getRedisOpts();
     //     return {
     //       logger: new Logger(SocketIoModule.name),
     //       redisUrl: `redis://${redisData.host}:${redisData.port}`,
@@ -76,13 +64,9 @@ import { WsAdapterModule } from '@libs/ws-adapter';
     //   },
     // }),
     WsAdapterModule.registerAsync({
-      inject: [VaultService],
-      async useFactory(vaultService: VaultService) {
-        const redisData = await vaultService.get<{
-          host: string;
-          port: number;
-          password: string;
-        }>(REDIS_VAULT_PATH);
+      inject: [CONFIG_MANAGER_TOKEN],
+      async useFactory(configManager: IConfigManager) {
+        const redisData = await configManager.getRedisOpts();
         return {
           logger: new Logger(SocketIoModule.name),
           redis: {

@@ -19,6 +19,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@libs/dev-config": ["libs/dev-config/src/index.ts"],
       "@libs/core": ["libs/core/src/index.ts"],
       "@libs/mongo-event-store": ["libs/mongo-event-store/src/index.ts"],
       "@libs/redis-session": ["libs/redis-session/src/index.ts"],

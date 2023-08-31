@@ -12,6 +12,7 @@ import {
   SessionManager,
   WithSession,
   ISocketAdapter,
+  Channel,
 } from '@libs/core';
 import * as internal from 'stream';
 import { randomUUID } from 'crypto';
@@ -87,7 +88,7 @@ export class WSService implements ISocketAdapter {
 
     if (
       typeof headerSessionID === 'string' &&
-      (await this.sessionManager.findOne(headerSessionID as string))
+      (await this.sessionManager.exists(headerSessionID as string))
     ) {
       this.logger.debug('existing session');
       sessionID = headerSessionID as string;
@@ -96,7 +97,10 @@ export class WSService implements ISocketAdapter {
       sessionID = randomUUID();
     }
 
-    await this.sessionManager.create(sessionID);
+    await this.sessionManager.create(sessionID, {
+      channel: Channel.WEB,
+      sessionStartTime: new Date(),
+    });
 
     this.wss.handleUpgrade(
       req,

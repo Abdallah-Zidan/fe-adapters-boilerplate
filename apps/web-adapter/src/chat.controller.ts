@@ -30,8 +30,12 @@ export class ChatController {
   }
 
   @EventPattern(WEB_OUTPUT_EVENT)
-  onWebOutputEvent(payload: IEvent) {
+  async onWebOutputEvent(payload: IEvent) {
     this.logger.debug(`received event from orchestrator : %j`, payload);
-    this.socketAdapter.send(payload);
+    try {
+      await this.socketAdapter.send(payload);
+    }catch (err){
+      this.logger.error(err)
+    }
   }
 }

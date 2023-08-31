@@ -6,6 +6,7 @@ import {
   Sender,
   SessionManager,
   ISocketAdapter,
+  Channel,
 } from '@libs/core';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
@@ -96,14 +97,17 @@ export class SocketIoService implements ISocketAdapter {
   private async ensureSession(socket: ExtendedSocket) {
     const sessionID =
       socket.handshake.auth['sessionID'] || socket.handshake.query['sessionID'];
-    if (sessionID && (await this.sessionManager.findOne(sessionID))) {
+    if (sessionID && (await this.sessionManager.exists(sessionID))) {
       socket.sessionID = sessionID;
       this.logger.debug('existing sessionID [%s]', sessionID);
       socket.join(sessionID);
     } else {
       const newSessionID = randomUUID();
       this.logger.debug('new sessionID [%s]', newSessionID);
-      await this.sessionManager.create(newSessionID);
+      await this.sessionManager.create(newSessionID, {
+        channel: Channel.WEB,
+        sessionStartTime: new Date(),
+      });
       socket.sessionID = newSessionID;
       socket.join(newSessionID);
     }

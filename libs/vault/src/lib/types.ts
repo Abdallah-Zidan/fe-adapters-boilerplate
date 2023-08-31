@@ -33,7 +33,7 @@ export interface ReadKvResponse {
 }
 
 export interface ReadKvResponseData {
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   metadata: Metadata;
 }
 

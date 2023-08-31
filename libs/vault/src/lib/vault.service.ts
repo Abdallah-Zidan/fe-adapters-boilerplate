@@ -5,13 +5,14 @@ import { LoginResponse, ReadKvResponse, VaultModuleOptions } from './types';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { EventEmitter, once } from 'events';
+import { IConfigManager, MongoOpts, RedisOpts } from '@libs/core';
 
 const tokenEvent = new EventEmitter();
 
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
 @Injectable()
-export class VaultService {
+export class VaultService implements IConfigManager {
   private readonly logger = new Logger(VaultService.name);
   private vaultUrl: string;
   private roleId: string;
@@ -28,6 +29,20 @@ export class VaultService {
     this.vaultUrl = moduleOptions.vaultUrl;
     this.roleId = moduleOptions.roleId;
     this.secretId = moduleOptions.secretId;
+  }
+  async getRedisOpts(): Promise<RedisOpts> {
+    return {
+      host: '',
+      port: 23,
+      password: '',
+    };
+  }
+  async getMongoOpts(): Promise<MongoOpts> {
+    return {
+      db: '',
+      host: '',
+      port: '',
+    };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
